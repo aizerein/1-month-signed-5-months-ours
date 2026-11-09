@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Month of Being Yours</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--black:#0a0a0a;--wine:#7a0c1e;--crim:#a3122b;--bone:#efe6dc;--gold:#b08d57}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--bone);font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;line-height:1.7;overflow-x:hidden}
+body.locked{overflow:hidden}
+.lbl{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+h1,h2{font-weight:500;line-height:1.15}
+h2{font-size:clamp(1.8rem,5vw,2.8rem);text-align:center;margin:.4rem 0 2.5rem}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* ===== BACKGROUND (fixed behind everything) ===== */
+#bg{position:fixed;inset:0;z-index:-3;background:#000;overflow:hidden}
+#bg .layer{position:absolute;inset:-4%;filter:grayscale(1) contrast(1.25);animation:breathe 30s ease-in-out infinite alternate}
+/* REPLACE BACKGROUND FLOWER PHOTO HERE (default path: images/flowers-bg.jpg) */
+#bgimg{width:100%;height:100%;object-fit:cover;display:none}
+#bg.photo #bgimg{display:block}#bg.photo #rosesvg{display:none}
+#rosesvg{width:100%;height:100%}
+#bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(122,12,30,.28),transparent 60%),linear-gradient(rgba(5,5,5,.68),rgba(5,5,5,.72))}
+@keyframes breathe{to{transform:scale(1.08)}}
+.vig{position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.85))}
+.grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.09;animation:grain 1s steps(4) infinite;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+@keyframes grain{25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(3%,3%)}}
+#fx{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.petal{position:absolute;top:-30px;width:12px;height:16px;border-radius:70% 0 70% 0;background:#cfcfcf;opacity:.4;filter:grayscale(1);animation:fall linear infinite}
+.ember{background:var(--crim);filter:none;box-shadow:0 0 8px var(--crim);opacity:.7}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(540deg)}}
+
+/* ===== LOCK ===== */
+#lock{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1.5rem;background:rgba(0,0,0,.35);transition:opacity 1.6s,transform 1.6s}
+#lock.open{opacity:0;transform:scale(1.15);pointer-events:none}
+#padlock{width:96px;height:auto;filter:drop-shadow(0 0 18px var(--crim));animation:pulse 3s ease-in-out infinite}
+#padlock.shake{animation:shake .5s}
+#shackle{transform-origin:62px 40px;transition:transform .9s .5s}
+#lock.open #shackle{transform:translateY(-14px) rotate(-35deg)}
+@keyframes pulse{50%{filter:drop-shadow(0 0 34px var(--crim))}}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+#lock p.intro{font-style:italic;font-size:1.35rem;max-width:25ch;margin:1.6rem 0 1.2rem}
+#pw{background:rgba(0,0,0,.55);border:1px solid var(--gold);color:var(--bone);padding:.7rem 1rem;font:inherit;font-size:1.1rem;text-align:center;width:min(280px,80vw);letter-spacing:.1em}
+.btn{background:linear-gradient(var(--crim),var(--wine));border:1px solid var(--gold);padding:.65rem 2rem;margin-top:1rem;font-family:'Cinzel',serif;letter-spacing:.2em;font-size:.8rem;text-transform:uppercase;transition:box-shadow .3s}
+.btn:hover{box-shadow:0 0 22px var(--crim)}
+#hint{font-size:.95rem;opacity:.7;max-width:34ch;margin-top:1.2rem}
+#err{min-height:1.6em;color:#e07a8a;font-style:italic;margin-top:.6rem}
+
+/* ===== LAYOUT ===== */
+main{display:none}main.on{display:block}
+section{padding:6rem 1.4rem;max-width:1000px;margin:0 auto;text-align:center}
+.rv{opacity:0;transform:translateY(28px);transition:opacity 1.6s,transform 1.6s}
+.rv.in{opacity:1;transform:none}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center}
+#hero h1{font-size:clamp(2.6rem,9vw,5.6rem);text-shadow:0 0 40px rgba(163,18,43,.6)}
+#hero .sub{font-style:italic;font-size:1.4rem;margin:.8rem 0 .4rem}
+.badge{display:inline-block;border:1px solid var(--gold);color:var(--gold);padding:.35rem 1.2rem;margin:1rem 0 2rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase}
+.counters{display:grid;gap:1.6rem;width:100%;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.cnt{border:1px solid rgba(176,141,87,.3);background:rgba(0,0,0,.45);padding:1.4rem 1rem;box-shadow:0 0 40px rgba(122,12,30,.2)}
+.cnt .u{display:flex;justify-content:center;gap:.9rem;margin-top:.8rem}
+.cnt b{display:block;font-size:2.2rem;font-weight:600;color:var(--bone);font-variant-numeric:tabular-nums}
+.cnt small{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;color:var(--gold)}
+#anniv{margin-top:2.2rem;font-size:1.3rem;font-style:italic;color:#e8a0ac;text-shadow:0 0 20px var(--crim)}
+#anniv.today{font-size:1.8rem;animation:pulse2 3s infinite}
+@keyframes pulse2{50%{text-shadow:0 0 40px var(--crim)}}
+
+/* GALLERY */
+.gal{display:grid;gap:2rem;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+figure{position:relative}
+.frame{position:relative;aspect-ratio:3/4;overflow:hidden;border:1px solid var(--gold);background:#111;display:flex;align-items:center;justify-content:center;font-size:5rem;color:#333}
+.frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.35)}
+.frame::after{content:"";position:absolute;inset:0;background:rgba(163,18,43,0);transition:background .6s;mix-blend-mode:multiply}
+figure:hover .frame::after{background:rgba(163,18,43,.45)}
+figcaption{font-style:italic;margin-top:1rem;font-size:1.1rem}
+figcaption .lbl{display:block;margin-bottom:.3rem}
+
+/* LETTER */
+#letter .paper{background:rgba(0,0,0,.5);border:1px solid rgba(176,141,87,.25);padding:2.2rem 1.5rem;text-align:left;box-shadow:0 0 60px rgba(122,12,30,.25)}
+#letter p{font-style:italic;font-size:1.25rem;margin-bottom:1.3rem}
+#letter p.short{font-size:1.5rem;color:#f3c9d0}
+#letter .sig{text-align:right;font-size:1.6rem;color:var(--gold)}
+
+/* CARDS */
+.grid{display:grid;gap:1.2rem;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.flip{perspective:900px;height:190px;background:none;border:0}
+.flip i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:1.2rem;font-style:italic;backface-visibility:hidden;transition:transform .9s;border:1px solid var(--gold)}
+.flip{position:relative}
+.flip .f{background:linear-gradient(135deg,var(--wine),#1a0309);font-family:'Cinzel',serif;font-style:normal;font-size:1.6rem;color:var(--gold)}
+.flip .b{background:rgba(0,0,0,.75);transform:rotateY(180deg)}
+.flip.on .f{transform:rotateY(-180deg)}.flip.on .b{transform:none}
+
+/* TIMELINE */
+.tl{position:relative;max-width:560px;margin:0 auto;padding-left:2.2rem;text-align:left}
+.tl::before{content:"";position:absolute;left:6px;top:0;bottom:0;width:2px;background:rgba(255,255,255,.08)}
+#thread{position:absolute;left:6px;top:0;width:2px;height:0;background:var(--crim);box-shadow:0 0 14px var(--crim)}
+.ev{position:relative;margin-bottom:3rem}
+.ev::before{content:"";position:absolute;left:-2.2rem;top:.5rem;width:14px;height:14px;border-radius:50%;background:var(--black);border:2px solid var(--crim);box-shadow:0 0 12px var(--crim)}
+.ev h3{font-weight:500;font-size:1.5rem}
+
+/* PROMISES + SEAL */
+.prom{font-size:1.4rem;font-style:italic;margin-bottom:1.6rem}
+#seal{width:110px;height:110px;border-radius:50%;border:0;margin-top:1rem;background:radial-gradient(circle at 35% 30%,#d02a45,var(--wine) 70%);box-shadow:0 0 30px var(--crim),inset 0 0 14px rgba(0,0,0,.5);font-size:2.2rem;color:#f0b0b8;font-family:'Cinzel',serif}
+#sealmsg{margin-top:1.4rem;font-size:1.3rem;font-style:italic;color:#f3c9d0;min-height:2em}
+
+/* ENVELOPES */
+.env{background:rgba(0,0,0,.55);border:1px solid var(--gold);padding:1.6rem 1.2rem;min-height:170px;text-align:center;transition:box-shadow .4s}
+.env:hover{box-shadow:0 0 24px rgba(163,18,43,.5)}
+.env .t{font-size:2rem}.env .note{display:none;font-style:italic;margin-top:.6rem}
+.env.on .note{display:block}.env.on .t,.env.on .lbl{display:none}
+
+/* CLOSING */
+#closing p{font-size:clamp(1.5rem,4vw,2.2rem);font-style:italic;max-width:22ch;margin:0 auto 1.5rem}
+#closing .sig{color:var(--gold);font-size:1.6rem}
+footer{text-align:center;padding:3rem 1rem 7rem}
+#mono{background:none;border:1px solid var(--gold);color:var(--gold);width:70px;height:70px;border-radius:50%;font-family:'Cinzel',serif;margin-bottom:1rem}
+#secret{max-width:34ch;margin:0 auto 1.2rem;font-style:italic;color:#f3c9d0;min-height:1.6em}
+
+/* PLAYER */
+#player{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:40;width:min(560px,94vw);background:rgba(10,10,10,.88);border:1px solid rgba(176,141,87,.5);backdrop-filter:blur(8px);padding:.5rem .8rem;display:none;align-items:center;gap:.6rem;font-size:.95rem}
+#player.on{display:flex}
+#player button{background:none;border:0;font-size:1.1rem;padding:.3rem .4rem;color:var(--bone)}
+#ptitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
+#player input[type=range]{accent-color:var(--crim);height:4px}
+#prog{width:100%}#vol{width:70px}
+#player .ctl{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;flex:1}
+#player .row{display:flex;align-items:center;gap:.4rem;width:100%}
+#player.min .ctl .hide{display:none}
+#tap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:45;background:var(--wine);border:1px solid var(--gold);padding:.5rem 1.2rem;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.15em;display:none}
+@media(max-width:560px){#vol{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.petal{display:none}}
+</style>
+</head>
+<body class="locked">
+
+<!-- Background: photo slot + built-in rose fallback -->
+<div id="bg">
+  <div class="layer">
+    <!-- REPLACE BACKGROUND FLOWER PHOTO HERE: put your black & white flower photo at images/flowers-bg.jpg -->
+    <img id="bgimg" src="images/flowers-bg.jpg" alt="" aria-hidden="true">
+    <svg id="rosesvg" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  </div>
+</div>
+<div class="vig"></div><div id="fx"></div><div class="grain"></div>
+
+<!-- ===== 1. LOCK SCREEN ===== -->
+<div id="lock">
+  <svg id="padlock" viewBox="0 0 124 150" aria-hidden="true">
+    <path id="shackle" d="M32 66V42a30 30 0 0 1 60 0v24" fill="none" stroke="#b08d57" stroke-width="9" stroke-linecap="round"/>
+    <rect x="12" y="62" width="100" height="78" rx="10" fill="#7a0c1e" stroke="#b08d57" stroke-width="3"/>
+    <circle cx="62" cy="95" r="9" fill="#0a0a0a"/><path d="M58 100h8l3 22H55z" fill="#0a0a0a"/>
+  </svg>
+  <p class="intro">There's something I've kept for you, my love. Only the two of us know the key.</p>
+  <input id="pw" type="text" inputmode="text" autocomplete="off" placeholder="The key" aria-label="Password">
+  <div id="err" role="alert"></div>
+  <button class="btn" id="unlock">Open</button>
+  <p id="hint">The day everything began. Day, month, year, the first day we met.</p>
+</div>
+
+<main id="main">
+<!-- ===== 2. HERO ===== -->
+<section id="hero">
+  <p class="lbl rv">For my wife</p>
+  <h1 class="rv">One Month of Being Yours</h1>
+  <p class="sub rv">Draz Hunter &amp; Mayiereth Demona</p>
+  <div class="badge rv">5 months together · 1 month married</div>
+  <div class="counters rv">
+    <div class="cnt"><div class="lbl">Since the day we first met</div><div class="u" id="c1"></div></div>
+    <div class="cnt"><div class="lbl">Since I made you mine</div><div class="u" id="c2"></div></div>
+  </div>
+  <p id="anniv" class="rv"></p>
+</section>
+
+<!-- ===== 3. GALLERY ===== -->
+<section id="gallery">
+  <p class="lbl rv">Two faces, one fate</p><h2 class="rv">Shadow &amp; Bloom</h2>
+  <div class="gal">
+    <figure class="rv">
+      <!-- HUSBAND PHOTO (muse: Michele Morrone). REPLACE: images/draz.jpeg -->
+      <div class="frame">D<img src="draz.jpeg" alt="Draz" onerror="this.remove()"></div>
+      <figcaption><span class="lbl">Draz</span>I was only ever half a man, waiting in the dark for you to find me.</figcaption>
+    </figure>
+    <figure class="rv">
+      <!-- WIFE PHOTO (muse: Krystal Dianna). REPLACE: images/mayiereth.jpeg -->
+      <div class="frame">M<img src="mayiereth.jpeg" alt="Mayiereth" onerror="this.remove()"></div>
+      <figcaption><span class="lbl">Mayiereth</span>You bloom the way only the rarest things do. Quietly, and in the dark.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===== 4. LETTER ===== -->
+<section id="letter">
+  <p class="lbl rv">A letter from Draz</p><h2 class="rv">My Love,</h2>
+  <div class="paper" id="paper">
+    <p>I don't know how to start this, so I'll just say it. You're here. Every time I think about that, it still stops me.</p>
+    <p>Five months. One of them as your husband. And I still catch myself saying the word softly, like it might disappear if I say it too loud.</p>
+    <p>Before you, I was a closed door. I thought that was strength.</p>
+    <p>You didn't knock. You just stood there. And somehow the door remembered what it was for.</p>
+    <p class="short">You changed me.</p>
+    <p>Not loudly. The way a single flower changes a dark room. It doesn't ask permission. It just makes the dark feel like it was waiting.</p>
+    <p>I used to think being understood was a story people told themselves to feel less alone. Then you looked at me, and I didn't have to explain anything. Not one thing.</p>
+    <p>You are my calm. You are my storm. I need both, and only you carry both.</p>
+    <p>Roses have thorns. People forget the thorns are part of it. I never wanted you softer. I never wanted you smaller. I wanted you exactly as you bled into my life.</p>
+    <p>I don't believe in accidents anymore. Something older than me knew your name long before I did.</p>
+    <p>Time is different now. It used to just pass. Now it stays. It's warm, and I'm afraid to waste a single second of it.</p>
+    <p>You chose me. Out of everyone, out of every other way your life could have gone. You chose me.</p>
+    <p>And I chose you back. I'd choose you in every version of every world.</p>
+    <p>Mine. Yes. I said it. I'm not sorry.</p>
+    <p class="short">You're the one thing I will never let go of.</p>
+    <p>...I'm a little scared of how much I need you. I wasn't going to write that down.</p>
+    <p>Thank you for staying. Thank you for being my wife.</p>
+    <p>I love you. I'm not done saying it.</p>
+    <p class="sig">— Draz</p>
+  </div>
+</section>
+
+<!-- ===== 5a. THINGS I HAVEN'T SAID YET ===== -->
+<section id="conf">
+  <p class="lbl rv">Tap a card</p><h2 class="rv">Things I Haven't Said Yet</h2>
+  <div class="grid" id="confgrid"></div>
+</section>
+
+<!-- ===== 5b. TIMELINE ===== -->
+<section id="time">
+  <p class="lbl rv">Our thread</p><h2 class="rv">Our Timeline</h2>
+  <div class="tl" id="tl"><div id="thread"></div>
+    <div class="ev rv"><span class="lbl">June 18, 2026</span><h3>The day we met</h3><p>The world went quiet, and I knew something had begun.</p></div>
+    <div class="ev rv"><span class="lbl">The moment I knew</span><h3>No date, only certainty</h3><p>It settled in my chest like it had always lived there. It was you. It was always going to be you.</p></div>
+    <div class="ev rv"><span class="lbl">October 10, 2026</span><h3>The day you became my wife</h3><p>I made a vow, and I meant every letter of it.</p></div>
+    <div class="ev rv"><span class="lbl">November 10, 2026</span><h3>One month of forever</h3><p>One month down. An endless number to go.</p></div>
+  </div>
+</section>
+
+<!-- ===== 5c. PROMISES ===== -->
+<section id="prom">
+  <p class="lbl rv">For the months ahead</p><h2 class="rv">My Promises</h2>
+  <p class="prom rv">I will be loyal to you when no one is watching.</p>
+  <p class="prom rv">I will guard your heart like it's the only one I'm made to keep.</p>
+  <p class="prom rv">I will love your storms as much as your stillness.</p>
+  <p class="prom rv">I will choose you again tomorrow. And the day after that.</p>
+  <button id="seal" aria-label="Break the seal">D</button>
+  <p id="sealmsg" aria-live="polite"></p>
+</section>
+
+<!-- ===== 5d. UNLOCK WHEN ===== -->
+<section id="env">
+  <p class="lbl rv">Sealed for you</p><h2 class="rv">Unlock When...</h2>
+  <div class="grid" id="envgrid"></div>
+</section>
+
+<!-- ===== 7. CLOSING ===== -->
+<section id="closing">
+  <p class="rv">Wherever this life goes, I'm already yours. And you're already mine.</p>
+  <div class="sig rv">— Draz</div>
+</section>
+<footer>
+  <button id="mono" aria-label="A final secret">D &amp; M</button>
+  <div id="secret" role="status"></div>
+  <div class="lbl">18.06.2026 · 10.10.2026 · 10.11.2026</div>
+</footer>
+</main>
+
+<!-- ===== 6. PLAYER ===== -->
+<button id="tap">Tap to play our music</button>
+<div id="player" aria-label="Music player">
+  <div class="ctl">
+    <div class="row">
+      <button id="prev" aria-label="Previous">⏮</button>
+      <button id="play" aria-label="Play or pause">⏸</button>
+      <button id="next" aria-label="Next">⏭</button>
+      <span id="ptitle"></span>
+      <button id="mute" class="hide" aria-label="Mute">🔊</button>
+      <input id="vol" class="hide" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="Volume">
+      <button id="fold" aria-label="Collapse player">▾</button>
+    </div>
+    <input id="prog" class="hide" type="range" min="0" max="100" value="0" step="0.1" aria-label="Progress">
+  </div>
+</div>
+
+<script>
+/* ===== DATES (change here) ===== */
+const MET   = new Date(2026, 5, 18);   // June 18, 2026 (month is 0-based)
+const WED   = new Date(2026, 9, 10);   // October 10, 2026
+const ANNIV = new Date(2026, 10, 10);  // November 10, 2026, 00:00 local
+const PASSWORDS = ['18062026','18june2026','june182026']; // after normalizing (see norm())
+
+/* ===== MUSIC: one persistent audio element, created once ===== */
+/* PUT MP3 FILES HERE (folder: audio/) */
+const TRACKS = [
+  {title:'Risk It All',      src:'risk-it-all.mp3'},
+  {title:'Shape of My Heart', src:'shape-of-my-heart.mp3'}
+];
+const audio = new Audio();
+audio.preload = 'auto';
+let cur = 0, userPaused = false, fails = 0, started = false;
+const $ = id => document.getElementById(id);
+function load(i){
+  cur = (i + TRACKS.length) % TRACKS.length;
+  audio.src = TRACKS[cur].src; audio.load();
+  $('ptitle').textContent = TRACKS[cur].title;
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({title:TRACKS[cur].title,artist:'Draz & Mayiereth',album:'One Month of Being Yours'});
+  }
+}
+function tryPlay(){
+  audio.play().then(()=>{$('tap').style.display='none';fails=0}).catch(()=>{ if(!userPaused) $('tap').style.display='block' });
+}
+load(0); // preloads first track
+audio.addEventListener('ended', ()=>{ load(cur+1); tryPlay(); });   // endless loop 1 -> 2 -> 1
+audio.addEventListener('error', ()=>{                                // missing/bad file: skip silently
+  if(++fails >= TRACKS.length) return;
+  load(cur+1); tryPlay();
+});
+audio.addEventListener('play',  ()=>$('play').textContent='⏸');
+audio.addEventListener('pause', ()=>$('play').textContent='▶');
+audio.addEventListener('timeupdate', ()=>{ if(audio.duration) $('prog').value = audio.currentTime/audio.duration*100 });
+$('prog').oninput = e => { if(audio.duration) audio.currentTime = e.target.value/100*audio.duration };
+$('vol').oninput = e => { audio.volume = e.target.value; audio.muted = false; $('mute').textContent = audio.volume ? '🔊':'🔇' };
+audio.volume = .7;
+$('mute').onclick = () => { audio.muted = !audio.muted; $('mute').textContent = audio.muted ? '🔇':'🔊' };
+$('play').onclick = () => { if(audio.paused){ userPaused=false; tryPlay() } else { userPaused=true; audio.pause() } };
+$('next').onclick = () => { load(cur+1); if(!userPaused) tryPlay() };
+$('prev').onclick = () => { load(cur-1); if(!userPaused) tryPlay() };
+$('fold').onclick = () => { const m=$('player').classList.toggle('min'); $('fold').textContent = m?'▴':'▾' };
+$('tap').onclick = () => { userPaused=false; tryPlay() };
+// resume after interruption unless the user paused on purpose
+document.addEventListener('visibilitychange', ()=>{ if(started && !document.hidden && audio.paused && !userPaused) tryPlay() });
+document.addEventListener('pointerdown', ()=>{ if(started && audio.paused && !userPaused) tryPlay() });
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play', ()=>{userPaused=false;tryPlay()});
+  navigator.mediaSession.setActionHandler('pause', ()=>{userPaused=true;audio.pause()});
+  navigator.mediaSession.setActionHandler('nexttrack', ()=>$('next').click());
+  navigator.mediaSession.setActionHandler('previoustrack', ()=>$('prev').click());
+}
+
+/* ===== BACKGROUND ===== */
+const probe = new Image();
+probe.onload = ()=>$('bg').classList.add('photo'); // photo found -> hide SVG fallback
+probe.src = 'images/flowers-bg.jpg';
+(function roses(){ // built-in grayscale rose fallback
+  const NS='http://www.w3.org/2000/svg', s=$('rosesvg');
+  let h='<defs><radialGradient id="pg"><stop offset="0" stop-color="#bbb"/><stop offset="1" stop-color="#222"/></radialGradient><filter id="bl"><feGaussianBlur stdDeviation="2"/></filter></defs><g filter="url(#bl)">';
+  [[250,260,190],[720,200,150],[560,560,230],[130,650,130],[900,620,140]].forEach(([x,y,R],k)=>{
+    for(let ring=7;ring>=0;ring--){
+      const n=5+ring, r=R*(ring+1)/8;
+      for(let i=0;i<n;i++){
+        const a=i/n*360+ring*23+k*17;
+        h+=`<ellipse cx="${x}" cy="${y-r*.55}" rx="${r*.5}" ry="${r*.62}" transform="rotate(${a} ${x} ${y})" fill="url(#pg)" stroke="#000" stroke-opacity=".7" stroke-width="2" opacity=".85"/>`;
+      }
+    }
+  });
+  s.innerHTML = h+'</g>';
+})();
+function drift(n, cls){ // slow falling petals / embers
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div'); p.className='petal '+(cls||'');
+    p.style.left=Math.random()*100+'vw'; p.style.setProperty('--dx',(Math.random()*200-100)+'px');
+    p.style.animationDuration=(14+Math.random()*16)+'s'; p.style.animationDelay=(-Math.random()*20)+'s';
+    $('fx').appendChild(p);
+  }
+}
+drift(14);
+
+/* ===== LOCK ===== */
+const norm = s => s.toLowerCase().replace(/[\s,.\/\-]/g,''); // ignores spaces, case, punctuation
+function tryUnlock(){
+  if(PASSWORDS.includes(norm($('pw').value))){
+    $('lock').classList.add('open'); $('err').textContent='';
+    setTimeout(()=>{ document.body.classList.remove('locked'); $('main').classList.add('on'); $('player').classList.add('on'); init() }, 1200);
+    started = true; tryPlay(); // user just interacted, so audio is allowed
+  } else {
+    $('err').textContent = 'Not that one, my love. Think back to our very first day...';
+    const p=$('padlock'); p.classList.remove('shake'); void p.getBoundingClientRect(); p.classList.add('shake');
+  }
+}
+$('unlock').onclick = tryUnlock;
+$('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock() });
+
+/* ===== MAIN ===== */
+function init(){
+  // reveal on scroll
+  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target) } }),{threshold:.2});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+  document.querySelectorAll('#paper p').forEach(el=>{ el.classList.add('rv'); io.observe(el) }); // letter, paragraph by paragraph
+
+  // confessions
+  const conf=['I was afraid you would see through me. I hoped you would.','The first time I looked at you, I forgot every other face.','I am jealous of anything that gets to be near you.','Some days I don\'t deserve you. I\'m keeping you anyway.','I\'m not afraid of forever. I\'m afraid of a forever without you.','You\'re the only place I have ever been quiet inside.'];
+  conf.forEach(t=>{ const b=document.createElement('button'); b.className='flip rv'; b.innerHTML='<i class="f">♥</i><i class="b">'+t+'</i>'; b.onclick=()=>b.classList.toggle('on'); $('confgrid').appendChild(b); io.observe(b) });
+
+  // envelopes
+  [['Open when you doubt yourself','Look at me. I chose you with my eyes open, and I would choose you again. You are not too much. You are not too little. You are exactly what I prayed for.'],
+   ['Open when you feel alone','You are not alone. Not for a second. Wherever you are, a part of me is standing right beside you.'],
+   ['Open when you need to remember who you are to me','You are my wife. My home. My favorite thing in a world I never quite trusted. Mine.']].forEach(([l,n])=>{
+    const b=document.createElement('button'); b.className='env rv'; b.innerHTML='<div class="t">✉</div><div class="lbl">'+l+'</div><div class="note">'+n+'</div>';
+    b.onclick=()=>b.classList.toggle('on'); $('envgrid').appendChild(b); io.observe(b) });
+
+  // wax seal + easter egg
+  $('seal').onclick=()=>{ $('seal').style.transform='scale(.9)'; $('sealmsg').textContent='Sealed. Forever, Mayiereth.' };
+  $('mono').onclick=()=>{ $('secret').textContent='If every world ended tomorrow, I would still find you in the next one.' };
+
+  // timeline thread draws itself
+  const tl=$('tl'), th=$('thread');
+  function draw(){ const r=tl.getBoundingClientRect(), v=innerHeight*.6;
+    th.style.height = Math.max(0,Math.min(r.height, v-r.top))+'px' }
+  addEventListener('scroll',draw,{passive:true}); draw();
+
+  // counters
+  const mk=(el)=>{ el.innerHTML=['Days','Hours','Min','Sec'].map(l=>'<div><b>0</b><small>'+l+'</small></div>').join('') };
+  mk($('c1')); mk($('c2'));
+  const set=(el,ms)=>{ ms=Math.max(0,ms); const v=[Math.floor(ms/864e5),Math.floor(ms/36e5)%24,Math.floor(ms/6e4)%60,Math.floor(ms/1e3)%60];
+    el.querySelectorAll('b').forEach((b,i)=>b.textContent=String(v[i]).padStart(2,'0')) };
+  let embersOn=false;
+  function tick(){
+    const now=new Date();
+    set($('c1'),now-MET); set($('c2'),now-WED);
+    const a=$('anniv');
+    if(now<ANNIV){
+      const left=ANNIV-now, d=Math.ceil(left/864e5);
+      const cd=[Math.floor(left/36e5),Math.floor(left/6e4)%60,Math.floor(left/1e3)%60].map(n=>String(n).padStart(2,'0')).join(':');
+      a.textContent=(left<=864e5?'Tomorrow, we turn one month':d+' days until our first month')+' · '+(left<=864e5?cd:'');
+    } else {
+      a.textContent='Today, we are one month married.'; a.classList.add('today');
+      if(!embersOn){ embersOn=true; drift(18,'ember') }
+    }
+  }
+  tick(); setInterval(tick,1000);
+}
+</script>
+</body>
+</html>
